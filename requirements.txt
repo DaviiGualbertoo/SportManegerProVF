@@ -1,2 +1,11 @@
-bottle
-pylint
+astroid==3.3.10
+bcrypt==4.3.0
+bottle==0.13.4
+colorama==0.4.6
+dill==0.4.0
+isort==6.0.1
+mccabe==0.7.0
+passlib==1.7.4
+platformdirs==4.3.8
+pylint==3.3.7
+tomlkit==0.13.3
