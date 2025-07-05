@@ -1,40 +1,27 @@
 # reset_db.py
 import os
-import sqlite3
-from database import create_tables, DB_NAME
+from database import create_tables, DB_NAME # Esta linha agora funciona
 
-def reset_database():
+def reset_database_script():
     """
-    Deleta o arquivo do banco de dados existente e recria as tabelas do zero.
-    Inclui uma confirmação de segurança para evitar execução acidental.
+    Script de desenvolvimento para apagar o banco de dados e começar do zero.
     """
-    # Etapa de segurança para evitar acidentes.
-    confirm = input(f"Você tem CERTEZA que quer deletar o banco de dados '{DB_NAME}'? \nIsso apagará TODOS os usuários, times e jogadores. \nDigite 'sim' para continuar: ")
+    confirm = input(f"Você tem CERTEZA que quer deletar o banco de dados '{DB_NAME}'? \nIsso apagará TODOS os dados. \nDigite 'sim' para continuar: ")
 
     if confirm.lower() != 'sim':
         print("Operação cancelada.")
         return
 
-    # Se o arquivo do banco de dados existir, ele será deletado.
+    # Deleta o arquivo .db se ele existir.
     if os.path.exists(DB_NAME):
-        try:
-            os.remove(DB_NAME)
-            print(f"Banco de dados antigo '{DB_NAME}' deletado com sucesso.")
-        except OSError as e:
-            print(f"Erro ao deletar o banco de dados: {e}")
-            return
+        os.remove(DB_NAME)
+        print(f"Banco de dados antigo '{DB_NAME}' deletado.")
     else:
-        print("Nenhum banco de dados antigo encontrado para deletar.")
+        print("Nenhum banco de dados antigo para deletar.")
 
-    # Recria o banco de dados e as tabelas vazias.
-    try:
-        print("Criando novo banco de dados e tabelas...")
-        # A função create_tables() já está no seu arquivo database.py
-        create_tables()
-        print("Banco de dados resetado com sucesso!")
-    except Exception as e:
-        print(f"Ocorreu um erro ao criar as novas tabelas: {e}")
+    # Chama a função de database.py para recriar as tabelas vazias.
+    print("Criando novo banco de dados e tabelas...")
+    create_tables()
 
 if __name__ == "__main__":
-    # Esta parte só executa quando o script é chamado diretamente.
-    reset_database()
+    reset_database_script()

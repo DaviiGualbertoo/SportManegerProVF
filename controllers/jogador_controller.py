@@ -3,65 +3,71 @@
 from bottle import route, template, request, redirect
 from database import get_db_connection
 from auth import get_current_user_id
-
-# --- Funções de Cadastro de Jogador ---
+from utils import save_image_upload
 
 @route('/jogadores/novo')
 def novo_jogador_form():
     user_id = get_current_user_id()
-    if not user_id:
-        redirect('/login')
+    if not user_id: redirect('/login')
     return template('views/jogador_form.tpl')
-
 
 @route('/jogadores/novo', method='POST')
 def salvar_novo_jogador():
     user_id = get_current_user_id()
-    if not user_id:
-        redirect('/login')
+    if not user_id: redirect('/login')
+
+    nome = request.forms.get('nome')
+    nacionalidade = request.forms.get('nacionalidade')
+    posicao = request.forms.get('posicao')
+    tipo = request.forms.get('tipo')
+    
+    if not nome or not posicao or not tipo:
+        return template("views/error.tpl", error_message="Nome, Posição e Tipo são campos obrigatórios.")
 
     try:
-        with get_db_connection() as conn:
-            time_db = conn.execute("SELECT id FROM times WHERE usuario_id = ?", (user_id,)).fetchone()
-        
-        if not time_db:
-            return template('views/error.tpl', error_message="Time não encontrado para este usuário.")
-        
-        time_id = time_db['id']
-        nome = request.forms.get('nome')
         idade = int(request.forms.get('idade'))
-        posicao = request.forms.get('posicao')
-        altura_str = request.forms.get('altura')
-        altura = float(altura_str) if altura_str else None
-        peso_str = request.forms.get('peso')
-        peso = float(peso_str) if peso_str else None
         overall = int(request.forms.get('overall'))
-        valor_mercado = float(request.forms.get('valor_mercado'))
-        tipo = request.forms.get('tipo')
+    except (ValueError, TypeError):
+        return template("views/error.tpl", error_message="Erro: Idade e Overall devem ser números inteiros válidos.")
 
-        with get_db_connection() as conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                """
-                INSERT INTO jogadores (nome, idade, posicao, altura, peso, overall, valor_mercado, tipo, time_id) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (nome, idade, posicao, altura, peso, overall, valor_mercado, tipo, time_id)
-            )
-            conn.commit()
-        
-        redirect('/time')
+    try:
+        altura_str = request.forms.get('altura')
+        altura = float(altura_str.replace(',', '.')) if altura_str else None
+        peso_str = request.forms.get('peso')
+        peso = float(peso_str.replace(',', '.')) if peso_str else None
+        valor_mercado_str = request.forms.get('valor_mercado')
+        valor_mercado_limpo = valor_mercado_str.replace('.', '').replace(',', '.')
+        valor_mercado = float(valor_mercado_limpo)
+    except (ValueError, TypeError):
+        return template("views/error.tpl", error_message="Erro: Altura, Peso e Valor de Mercado devem ser números válidos.")
+
+    foto_upload = request.files.get('foto')
+    foto_path = save_image_upload(foto_upload, 'jogadores')
+
+    with get_db_connection() as conn:
+        time_db = conn.execute("SELECT id FROM times WHERE usuario_id = ?", (user_id,)).fetchone()
+    if not time_db: return template('views/error.tpl', error_message="Time não encontrado para este usuário.")
+    time_id = time_db['id']
+
+    with get_db_connection() as conn:
+        sql_cols = "nome, nacionalidade, idade, posicao, altura, peso, overall, valor_mercado, tipo, time_id"
+        sql_vals = "?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
+        params = [nome, nacionalidade, idade, posicao, altura, peso, overall, valor_mercado, tipo, time_id]
+        if foto_path:
+            sql_cols += ", foto_url"
+            sql_vals += ", ?"
+            params.append(foto_path)
+        sql = f"INSERT INTO jogadores ({sql_cols}) VALUES ({sql_vals})"
+        conn.execute(sql, tuple(params))
+        conn.commit()
     
-    except ValueError:
-        return template("views/error.tpl", error_message="Erro: Verifique se todos os campos obrigatórios foram preenchidos e se os valores numéricos são válidos.")
+    redirect('/time')
 
-# --- ROTA DE DETALHES ---
+# --- ROTA DE DETALHES DO JOGADOR (PROVAVELMENTE ESTAVA FALTANDO) ---
 @route('/jogador/<jogador_id:int>')
 def detalhes_do_jogador(jogador_id):
     user_id = get_current_user_id()
-    if not user_id:
-        redirect('/login')
-
+    if not user_id: redirect('/login')
     with get_db_connection() as conn:
         if not verificar_posse_jogador(conn, user_id, jogador_id):
             return template('views/error.tpl', error_message="Acesso negado. Este jogador não pertence ao seu time.")
@@ -73,90 +79,106 @@ def detalhes_do_jogador(jogador_id):
     else:
         return template('views/error.tpl', error_message="Jogador não encontrado.")
 
+# --- ROTAS DE EDIÇÃO DE JOGADOR ---
+@route('/jogador/editar/<jogador_id:int>')
+def exibir_form_edicao_jogador(jogador_id):
+    user_id = get_current_user_id()
+    if not user_id: redirect('/login')
+    with get_db_connection() as conn:
+        if not verificar_posse_jogador(conn, user_id, jogador_id):
+            return template('views/error.tpl', error_message="Acesso negado.")
+        jogador_db = conn.execute("SELECT * FROM jogadores WHERE id = ?", (jogador_id,)).fetchone()
+    if not jogador_db: return template('views/error.tpl', error_message="Jogador não encontrado.")
+    return template('views/jogador_edit_form.tpl', jogador=jogador_db)
 
-# --- Ações em Jogadores Existentes (Vender, Promover, Lesionar) ---
+@route('/jogador/editar/<jogador_id:int>', method='POST')
+def salvar_edicao_jogador(jogador_id):
+    user_id = get_current_user_id()
+    if not user_id: redirect('/login')
+
+    try:
+        nome = request.forms.get('nome')
+        nacionalidade = request.forms.get('nacionalidade')
+        posicao = request.forms.get('posicao')
+        idade = int(request.forms.get('idade'))
+        overall = int(request.forms.get('overall'))
+        altura_str = request.forms.get('altura')
+        altura = float(altura_str.replace(',', '.')) if altura_str else None
+        peso_str = request.forms.get('peso')
+        peso = float(peso_str.replace(',', '.')) if peso_str else None
+        valor_mercado_str = request.forms.get('valor_mercado')
+        valor_mercado_limpo = valor_mercado_str.replace('.', '').replace(',', '.')
+        valor_mercado = float(valor_mercado_limpo)
+        foto_upload = request.files.get('foto')
+        foto_path = save_image_upload(foto_upload, 'jogadores')
+
+        sql = "UPDATE jogadores SET nome = ?, nacionalidade = ?, idade = ?, posicao = ?, altura = ?, peso = ?, overall = ?, valor_mercado = ?"
+        params = [nome, nacionalidade, idade, posicao, altura, peso, overall, valor_mercado]
+        if foto_path:
+            sql += ", foto_url = ?"
+            params.append(foto_path)
+        sql += " WHERE id = ?"
+        params.append(jogador_id)
+
+        with get_db_connection() as conn:
+            if not verificar_posse_jogador(conn, user_id, jogador_id):
+                return template('views/error.tpl', error_message="Acesso negado.")
+            conn.execute(sql, tuple(params))
+            conn.commit()
+        redirect(f"/jogador/{jogador_id}")
+    except (ValueError, TypeError):
+        return template("views/error.tpl", error_message="Erro: Verifique se os valores numéricos são válidos.")
 
 def verificar_posse_jogador(conn, user_id, jogador_id):
-    resultado = conn.execute("""
-        SELECT j.time_id FROM jogadores j
-        INNER JOIN times t ON j.time_id = t.id
-        WHERE j.id = ? AND t.usuario_id = ?
-    """, (jogador_id, user_id)).fetchone()
+    resultado = conn.execute("SELECT j.time_id FROM jogadores j INNER JOIN times t ON j.time_id = t.id WHERE j.id = ? AND t.usuario_id = ?", (jogador_id, user_id)).fetchone()
     return resultado is not None
-
 
 @route('/jogador/vender/<jogador_id:int>')
 def vender_jogador(jogador_id):
     user_id = get_current_user_id()
-    if not user_id:
-        redirect('/login')
-
+    if not user_id: redirect('/login')
     with get_db_connection() as conn:
         if not verificar_posse_jogador(conn, user_id, jogador_id):
-            return template('views/error.tpl', error_message="Acesso negado. Você não tem permissão para vender este jogador.")
-        
+            return template('views/error.tpl', error_message="Acesso negado.")
         jogador_vendido = conn.execute("SELECT valor_mercado, time_id FROM jogadores WHERE id = ?", (jogador_id,)).fetchone()
         valor = jogador_vendido['valor_mercado']
         time_id = jogador_vendido['time_id']
-
         conn.execute("UPDATE times SET orcamento = orcamento + ? WHERE id = ?", (valor, time_id))
         conn.execute("DELETE FROM jogadores WHERE id = ?", (jogador_id,))
         conn.commit()
-
     redirect('/time')
-
 
 @route('/jogador/promover/<jogador_id:int>')
 def promover_jogador(jogador_id):
     user_id = get_current_user_id()
-    if not user_id:
-        redirect('/login')
-
+    if not user_id: redirect('/login')
     with get_db_connection() as conn:
         if not verificar_posse_jogador(conn, user_id, jogador_id):
-            return template('views/error.tpl', error_message="Acesso negado. Você não tem permissão para promover este jogador.")
-
+            return template('views/error.tpl', error_message="Acesso negado.")
         conn.execute("UPDATE jogadores SET tipo = 'Profissional' WHERE id = ?", (jogador_id,))
         conn.commit()
-
     redirect('/time')
-
 
 @route('/jogador/lesao/<jogador_id:int>')
 def exibir_formulario_lesao(jogador_id):
     user_id = get_current_user_id()
-    if not user_id:
-        redirect('/login')
-
+    if not user_id: redirect('/login')
     with get_db_connection() as conn:
         if not verificar_posse_jogador(conn, user_id, jogador_id):
             return template('views/error.tpl', error_message="Acesso negado.")
-        
         jogador = conn.execute("SELECT id, nome FROM jogadores WHERE id = ?", (jogador_id,)).fetchone()
-        
-    if jogador:
-        return template('views/lesao_form.tpl', jogador=jogador)
-    else:
-        return template('views/error.tpl', error_message="Jogador não encontrado.")
-
+    if jogador: return template('views/lesao_form.tpl', jogador=jogador)
+    else: return template('views/error.tpl', error_message="Jogador não encontrado.")
 
 @route('/jogador/lesao/<jogador_id:int>', method='POST')
 def salvar_status_lesao(jogador_id):
     user_id = get_current_user_id()
-    if not user_id:
-        redirect('/login')
-
+    if not user_id: redirect('/login')
     tipo_lesao = request.forms.get('tipo_lesao')
     tempo_recuperacao = int(request.forms.get('tempo_recuperacao'))
-
     with get_db_connection() as conn:
         if not verificar_posse_jogador(conn, user_id, jogador_id):
             return template('views/error.tpl', error_message="Acesso negado.")
-
-        conn.execute(
-            "UPDATE jogadores SET status_lesao = 'Lesionado', tipo_lesao = ?, tempo_recuperacao = ? WHERE id = ?",
-            (tipo_lesao, tempo_recuperacao, jogador_id)
-        )
+        conn.execute("UPDATE jogadores SET status_lesao = 'Lesionado', tipo_lesao = ?, tempo_recuperacao = ? WHERE id = ?", (tipo_lesao, tempo_recuperacao, jogador_id))
         conn.commit()
-    
     redirect('/time')

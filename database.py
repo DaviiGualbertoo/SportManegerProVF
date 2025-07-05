@@ -1,57 +1,58 @@
 # database.py
 import sqlite3
 
-# Nome do arquivo do banco de dados
 DB_NAME = "sportmanager.db"
 
 def get_db_connection():
     """Cria e retorna uma conexão com o banco de dados."""
     conn = sqlite3.connect(DB_NAME)
-    # Retorna as linhas como dicionários, para facilitar o acesso por nome de coluna
     conn.row_factory = sqlite3.Row
     return conn
 
 def create_tables():
-    """Cria as tabelas do banco de dados se elas não existirem."""
+    """Define e cria a estrutura de todas as tabelas do banco de dados."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Tabela de Usuários (para login)
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
+        email TEXT NOT NULL UNIQUE,
         senha TEXT NOT NULL
     )
     ''')
 
-    # Tabela de Times
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS times (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
-        orcamento REAL NOT NULL DEFAULT 5000000.0,
+        orcamento REAL NOT NULL,
+        escudo_url TEXT DEFAULT '/static/img/escudo_padrao.png',
+        formacao_atual TEXT DEFAULT '4-3-3',
         usuario_id INTEGER,
         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
     )
     ''')
 
-    # Tabela de Jogadores
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS jogadores (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nome TEXT NOT NULL,
+        nacionalidade TEXT,
         idade INTEGER NOT NULL,
         posicao TEXT NOT NULL,
         altura REAL,
         peso REAL,
         overall INTEGER NOT NULL,
         valor_mercado REAL NOT NULL,
-        tipo TEXT NOT NULL, -- 'Profissional' ou 'Base'
-        status_lesao TEXT DEFAULT 'Disponível', -- 'Disponível', 'Lesionado'
-        tipo_lesao TEXT, -- 'Leve', 'Moderada', 'Grave'
-        tempo_recuperacao INTEGER, -- em dias
+        tipo TEXT NOT NULL,
+        status_lesao TEXT DEFAULT 'Disponível',
+        tipo_lesao TEXT,
+        tempo_recuperacao INTEGER,
+        status_escalacao TEXT DEFAULT 'Reserva',
+        posicao_indice INTEGER,
+        foto_url TEXT DEFAULT '/static/img/jogador_padrao.png',
         time_id INTEGER,
         FOREIGN KEY (time_id) REFERENCES times(id)
     )
@@ -59,8 +60,8 @@ def create_tables():
 
     conn.commit()
     conn.close()
-    print("Tabelas criadas com sucesso!")
+    print("Tabelas criadas/atualizadas com sucesso!")
 
-if __name__ == "__main__":
-    # Se executarmos este arquivo diretamente, ele cria o banco e as tabelas.
+if __name__ == '__main__':
+    # Se este arquivo for executado diretamente, ele cria o banco.
     create_tables()
