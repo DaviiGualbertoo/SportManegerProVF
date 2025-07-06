@@ -1,7 +1,17 @@
+# Arquivos de cache do Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Arquivos de Banco de Dados
 *.db
+
+# Arquivos de variáveis de ambiente
 .env
+
+# Pasta do Git
 .git/
+
+# Pasta do Ambiente Virtual
+venv/
