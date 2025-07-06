@@ -9,8 +9,7 @@
     margin-bottom: 2rem;
   }
   .escalacao-controles h2, .escalacao-controles strong {
-    color: #212529;
-    text-shadow: none;
+    color: #212529; text-shadow: none;
   }
 
   /* --- ESTILOS PARA O CAMPO DE FUTEBOL E JOGADORES --- */
@@ -35,27 +34,20 @@
     align-items: center;
   }
   .foto-jogador-escalacao {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid #fff;
-      margin-bottom: 5px;
+      width: 50px; height: 50px;
+      border-radius: 50%; object-fit: cover;
+      border: 2px solid #fff; margin-bottom: 5px;
       background-color: #555;
   }
   .posicao-nome {
-    font-weight: bold;
-    font-size: 0.9rem;
+    font-weight: bold; font-size: 0.9rem;
     background-color: rgba(0, 0, 0, 0.6);
-    padding: 2px 5px;
-    border-radius: 3px;
+    padding: 2px 5px; border-radius: 3px;
     margin-bottom: 5px;
   }
   .posicao-marcador select {
-    width: 180px;
-    font-size: 0.8rem;
-    text-align: center;
-    border-radius: 5px;
+    width: 180px; font-size: 0.8rem;
+    text-align: center; border-radius: 5px;
   }
 </style>
 
@@ -70,7 +62,7 @@
             <div class="row align-items-center">
                 <div class="col-lg-4 mb-3 mb-lg-0">
                     <form action="/escalacao/definir-formacao" method="post" class="d-flex">
-                        <label for="formacao" class="form-label me-2"><strong>Formação:</strong></label>
+                        <label for="formacao" class="form-label me-2 my-auto"><strong>Formação:</strong></label>
                         <select class="form-select" id="formacao" name="formacao">
                             % for f in formacoes:
                                 <option value="{{f}}" {{'selected' if f == time['formacao_atual'] else ''}}>{{f}}</option>
@@ -107,6 +99,7 @@
         % posicoes_css_lista = posicoes_css.get(formacao_atual, [])
         % for i, nome_posicao in enumerate(posicoes_formacao):
             <div class="posicao-marcador" style="{{posicoes_css_lista[i]}}">
+                % # Pega o jogador que foi salvo neste índice de posição (ex: índice 0 = Goleiro)
                 % jogador_atual = mapa_indice_jogador.get(i)
                 
                 <img src="{{ jogador_atual['foto_url'] if jogador_atual else '/static/img/jogador_padrao.png' }}" class="foto-jogador-escalacao" alt="Foto do jogador">

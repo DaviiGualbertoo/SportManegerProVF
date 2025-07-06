@@ -16,29 +16,19 @@
                 <div class="col-md-4 mb-3">
                      <form action="/time/renomear" method="post">
                         <label class="form-label"><strong>Renomear Time:</strong></label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" name="nome" placeholder="Novo nome" required>
-                            <button class="btn btn-outline-secondary" type="submit">OK</button>
-                        </div>
+                        <div class="input-group"><input type="text" class="form-control" name="nome" placeholder="Novo nome" required><button class="btn btn-outline-secondary" type="submit">OK</button></div>
                     </form>
                 </div>
                 <div class="col-md-4 mb-3">
                     <form action="/time/upload-escudo" method="post" enctype="multipart/form-data">
                         <label class="form-label"><strong>Alterar Escudo:</strong></label>
-                        <div class="input-group">
-                            <input type="file" class="form-control" name="escudo" required>
-                            <button class="btn btn-outline-secondary" type="submit">Enviar</button>
-                        </div>
+                        <div class="input-group"><input type="file" class="form-control" name="escudo" required><button class="btn btn-outline-secondary" type="submit">Enviar</button></div>
                     </form>
                 </div>
                 <div class="col-md-4 mb-3">
                     <form action="/time/orcamento" method="post">
                         <label class="form-label"><strong>Gerenciar Verba:</strong></label>
-                        <div class="input-group">
-                            <input type="text" inputmode="decimal" class="form-control" name="valor" placeholder="Valor" required>
-                            <button type="submit" name="action" value="add" class="btn btn-outline-success" title="Adicionar">+</button>
-                            <button type="submit" name="action" value="remove" class="btn btn-outline-danger" title="Remover">-</button>
-                        </div>
+                        <div class="input-group"><input type="text" inputmode="decimal" class="form-control" name="valor" placeholder="Valor" required><button type="submit" name="action" value="add" class="btn btn-outline-success" title="Adicionar">+</button><button type="submit" name="action" value="remove" class="btn btn-outline-danger" title="Remover">-</button></div>
                     </form>
                 </div>
             </div>
