@@ -1,4 +1,4 @@
-% rebase('views/layout.tpl', title='Registrar')
+% rebase('views/layout.tpl', title=' ')
 
 <div class="container" style="max-width: 500px;">
   <div class="form-dark-theme">

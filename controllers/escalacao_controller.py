@@ -1,9 +1,12 @@
 # controllers/escalacao_controller.py
+# Este controller gerencia a lógica complexa da página de escalação.
+
 from bottle import route, template, redirect, request
 from database import get_db_connection
 from auth import get_current_user_id
 import random
 
+# Dicionários de configuração para a lógica de escalação.
 SETORES = {'Goleiro': 'Goleiro', 'Zagueiro': 'Defesa', 'Lateral Direito': 'Defesa', 'Lateral Esquerdo': 'Defesa', 'Volante': 'Meio-Campo', 'Meia Central': 'Meio-Campo', 'Meia Ofensivo': 'Meio-Campo', 'Ponta Direita': 'Ataque', 'Ponta Esquerda': 'Ataque', 'Centroavante': 'Ataque', 'Ala Direito': 'Defesa', 'Ala Esquerdo': 'Defesa', 'Meia Direita': 'Meio-Campo', 'Meia Esquerda': 'Meio-Campo', 'Atacante': 'Ataque'}
 
 FORMACOES = {'4-4-2': ['Goleiro', 'Lateral Esquerdo', 'Zagueiro', 'Zagueiro', 'Lateral Direito', 'Meia Esquerda', 'Volante', 'Volante', 'Meia Direita', 'Atacante', 'Atacante'], '4-3-3': ['Goleiro', 'Lateral Esquerdo', 'Zagueiro', 'Zagueiro', 'Lateral Direito', 'Volante', 'Meia Central', 'Meia Ofensivo', 'Ponta Esquerda', 'Ponta Direita', 'Centroavante'], '4-2-3-1': ['Goleiro', 'Lateral Esquerdo', 'Zagueiro', 'Zagueiro', 'Lateral Direito', 'Volante', 'Volante', 'Meia Ofensivo', 'Ponta Esquerda', 'Ponta Direita', 'Centroavante'], '3-5-2': ['Goleiro', 'Zagueiro', 'Zagueiro', 'Zagueiro', 'Ala Esquerdo', 'Volante', 'Meia Central', 'Meia Central', 'Ala Direito', 'Atacante', 'Atacante'], '5-3-2': ['Goleiro', 'Zagueiro', 'Zagueiro', 'Zagueiro', 'Ala Esquerdo', 'Ala Direito', 'Volante', 'Meia Central', 'Meia Central', 'Atacante', 'Atacante']}
@@ -11,6 +14,7 @@ FORMACOES = {'4-4-2': ['Goleiro', 'Lateral Esquerdo', 'Zagueiro', 'Zagueiro', 'L
 POSICOES_CSS = {'4-4-2': ['top: 88%; left: 50%;', 'top: 68%; left: 15%;', 'top: 75%; left: 37%;', 'top: 75%; left: 63%;', 'top: 68%; left: 85%;', 'top: 48%; left: 18%;', 'top: 55%; left: 40%;', 'top: 55%; left: 60%;', 'top: 48%; left: 82%;', 'top: 25%; left: 40%;', 'top: 25%; left: 60%;'], '4-3-3': ['top: 88%; left: 50%;', 'top: 70%; left: 15%;', 'top: 78%; left: 37%;', 'top: 78%; left: 63%;', 'top: 70%; left: 85%;', 'top: 60%; left: 50%;', 'top: 45%; left: 35%;', 'top: 45%; left: 65%;', 'top: 20%; left: 20%;', 'top: 20%; left: 80%;', 'top: 15%; left: 50%;'], '4-2-3-1': ['top: 88%; left: 50%;', 'top: 70%; left: 15%;', 'top: 78%; left: 37%;', 'top: 78%; left: 63%;', 'top: 70%; left: 85%;', 'top: 60%; left: 40%;', 'top: 60%; left: 60%;', 'top: 40%; left: 50%;', 'top: 35%; left: 20%;', 'top: 35%; left: 80%;', 'top: 15%; left: 50%;'], '3-5-2': ['top: 88%; left: 50%;', 'top: 75%; left: 30%;', 'top: 80%; left: 50%;', 'top: 75%; left: 70%;', 'top: 45%; left: 15%;', 'top: 60%; left: 50%;', 'top: 45%; left: 35%;', 'top: 45%; left: 65%;', 'top: 45%; left: 85%;', 'top: 20%; left: 40%;', 'top: 20%; left: 60%;'], '5-3-2': ['top: 88%; left: 50%;', 'top: 75%; left: 20%;', 'top: 80%; left: 37%;', 'top: 80%; left: 63%;', 'top: 75%; left: 80%;', 'top: 45%; left: 15%;', 'top: 45%; left: 85%;', 'top: 55%; left: 50%;', 'top: 40%; left: 35%;', 'top: 40%; left: 65%;', 'top: 18%; left: 40%;', 'top: 18%; left: 60%;']}
 
 def analisar_time(jogadores_escalados):
+    """Calcula a força dos setores e o equilíbrio tático do time titular."""
     analise = {'forca_defesa': 0, 'forca_meio': 0, 'forca_ataque': 0, 'equilibrio': 'Equilibrado'}
     contagem = {'Defesa': 0, 'Meio-Campo': 0, 'Ataque': 0}
     if not jogadores_escalados: return analise
@@ -35,6 +39,7 @@ def analisar_time(jogadores_escalados):
 
 @route('/escalacao')
 def escalacao():
+    """Exibe a página principal de gerenciamento da escalação."""
     user_id = get_current_user_id()
     if not user_id: redirect('/login')
     with get_db_connection() as conn:
@@ -55,6 +60,7 @@ def escalacao():
 
 @route('/escalacao/definir-formacao', method='POST')
 def definir_formacao():
+    """Define uma nova formação tática para o time e limpa a escalação atual."""
     user_id = get_current_user_id()
     if not user_id: redirect('/login')
     nova_formacao = request.forms.get('formacao')
@@ -67,23 +73,24 @@ def definir_formacao():
 
 @route('/escalacao/salvar', method='POST')
 def salvar_escalacao():
+    """Salva a escalação definida pelo usuário no campo."""
     user_id = get_current_user_id()
     if not user_id: redirect('/login')
     
     selecoes = [request.forms.get(f'posicao_{i}') for i in range(11)]
-    selecoes_validas = [s for s in selecoes if s and s != ""]
+    selecoes_validas = [s for s in selecoes if s]
     if len(selecoes_validas) != len(set(selecoes_validas)):
         return template('views/error.tpl', error_message="Erro: O mesmo jogador foi escalado em mais de uma posição.")
 
     with get_db_connection() as conn:
-        time_db = conn.execute("SELECT id FROM times WHERE usuario_id = ?", (user_id,)).fetchone()
+        time_db = conn.execute("SELECT * FROM times WHERE usuario_id = ?", (user_id,)).fetchone()
         time_id = time_db['id']
         
         conn.execute("UPDATE jogadores SET status_escalacao = 'Reserva', posicao_indice = NULL WHERE time_id = ?", (time_id,))
         
         for i in range(11):
             jogador_id = request.forms.get(f'posicao_{i}')
-            if jogador_id and jogador_id != "":
+            if jogador_id:
                 conn.execute(
                     "UPDATE jogadores SET status_escalacao = 'Titular', posicao_indice = ? WHERE id = ? AND time_id = ?",
                     (i, jogador_id, time_id)
@@ -94,6 +101,7 @@ def salvar_escalacao():
 
 @route('/escalacao/auto/<estilo>')
 def auto_escalar(estilo):
+    """Preenche a escalação automaticamente com base em um estilo de jogo."""
     user_id = get_current_user_id()
     if not user_id: redirect('/login')
     

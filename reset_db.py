@@ -1,13 +1,17 @@
 # reset_db.py
+# Uma ferramenta de desenvolvimento para apagar e recriar o banco de dados rapidamente.
+
 import os
-from database import create_tables, DB_NAME # Esta linha agora funciona
+from database import create_tables, DB_NAME
 
 def reset_database_script():
     """
-    Script de desenvolvimento para apagar o banco de dados e começar do zero.
+    Apaga o arquivo do banco de dados e chama a função para recriar as tabelas.
     """
+    # Etapa de segurança para evitar execução acidental.
     confirm = input(f"Você tem CERTEZA que quer deletar o banco de dados '{DB_NAME}'? \nIsso apagará TODOS os dados. \nDigite 'sim' para continuar: ")
 
+    # Se a resposta não for 'sim', cancela a operação.
     if confirm.lower() != 'sim':
         print("Operação cancelada.")
         return
