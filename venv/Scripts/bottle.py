@@ -1,4 +1,4 @@
-#!C:\Users\Usuario\Documents\epfOO\SportManagerPro\venv\Scripts\python.exe
+#!C:\Users\Usuario\Documents\epfOO\SportManegerProVF\venv\Scripts\python.exe
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 """

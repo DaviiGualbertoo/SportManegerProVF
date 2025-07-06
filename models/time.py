@@ -1,37 +1,24 @@
 # models/time.py
 class Time:
-    def __init__(self, nome, orcamento=5000000.0, id=None):
-        self.nome = nome
-        self._orcamento = orcamento  # Atributo privado/protegido (Encapsulamento)
-        self.jogadores = [] # Lista de objetos Jogador
+    """
+    Representa um time de futebol com suas informações e lista de jogadores.
+    """
+    def __init__(self, nome, orcamento=5000000.0, escudo_url='/static/img/escudo_padrao.png', id=None):
         self.id = id
+        self.nome = nome
+        # O '_' indica um atributo "protegido" (Encapsulamento).
+        # Ele não deve ser alterado diretamente de fora da classe.
+        self._orcamento = orcamento
+        self.escudo_url = escudo_url
+        self.jogadores = [] # Lista que conterá os objetos Jogador do time.
 
-    # Um "getter" para acessar o orçamento de forma segura
     def get_orcamento(self):
+        """Método "getter" para acessar o orçamento de forma segura."""
         return self._orcamento
 
-    # Método para modificar o orçamento de forma controlada
-    def vender_jogador(self, jogador):
-        if jogador in self.jogadores:
-            self._orcamento += jogador.valor_mercado
-            self.jogadores.remove(jogador)
-            print(f"Jogador {jogador.nome} vendido! Orçamento atual: {self._orcamento}")
-            return True
-        return False
-
-    # Outro método para modificar o orçamento
-    def adicionar_verba(self, valor):
-        if valor > 0:
-            self._orcamento += valor
-
-    # Sua funcionalidade extra!
     def calcular_forca_time(self):
-        if not self.jogadores: # Se não houver jogadores
+        """Calcula a média de overall de todos os jogadores do elenco."""
+        if not self.jogadores:
             return 0
-
-        soma_overall = 0
-        for jogador in self.jogadores:
-            soma_overall += jogador.overall
-
-        media = soma_overall / len(self.jogadores)
-        return round(media, 2) # Arredonda para 2 casas decimais
+        soma_overall = sum(jogador.overall for jogador in self.jogadores)
+        return round(soma_overall / len(self.jogadores), 2)

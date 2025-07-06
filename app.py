@@ -10,7 +10,7 @@ class App:
     def setup_routes(self):
         from controllers import init_controllers
 
-        print('Inicializa rotas!')
+        print('🚀 Inicializa rotas!')
         init_controllers(self.bottle)
 
 
