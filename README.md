@@ -121,7 +121,7 @@ O projeto foi construído para aplicar os 4 pilares da Programação Orientada a
 
 ## Diagrama de Classes (UML)
 
-*(**Instrução para vocês:** Usem uma ferramenta como o [draw.io](https://app.diagrams.net/), criem o diagrama seguindo o guia abaixo, salvem como uma imagem `diagrama.png` na raiz do projeto, e substituam esta linha pela imagem: `![Diagrama de Classes](diagrama.png)`)*
+![Image](https://github.com/user-attachments/assets/304d4384-cd24-4522-be84-b3916cde1dfd)
 
 **Guia para criar o Diagrama:**
 -   **Caixas (Classes):** Crie uma caixa para cada classe: `Pessoa`, `Jogador`, `JogadorProfissional`, `JogadorBase`, `Time`, `Usuario`.
